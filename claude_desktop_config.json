@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "uart-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "mcp_only.py"],
+      "cwd": "D:\\workspace\\pythonTools\\uart-mcp",
+      "env": {
+        "PYTHONPATH": "D:\\workspace\\pythonTools\\uart-mcp"
+      }
+    }
+  }
+} 

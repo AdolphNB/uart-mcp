@@ -322,9 +322,10 @@ class UartMcpApp(QMainWindow):
         """)
 
 def run_mcp_service(mcp_service: McpService):
-    """Function to run the asyncio event loop for the MCP service."""
+    """Function to run the MCP service in STDIO mode."""
     try:
-        asyncio.run(mcp_service.start())
+        # 启动 STDIO 模式的 MCP 服务
+        mcp_service.start()
     except Exception as e:
         print(f"MCP Service thread encountered an error: {e}")
 
@@ -340,7 +341,7 @@ if __name__ == '__main__':
     window = UartMcpApp(serial_service, app_config)
     window.show()
     
-    # Create and start the MCP service in a background daemon thread
+    # Create and start the MCP service in a background daemon thread (STDIO mode)
     mcp_service = McpService(serial_service)
     mcp_thread = threading.Thread(target=run_mcp_service, args=(mcp_service,), daemon=True)
     mcp_thread.start()
