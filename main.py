@@ -130,7 +130,7 @@ class UartMcpApp(QMainWindow):
         right_layout.addWidget(send_widget, 1)  # 设置stretch因子为1，占1/3空间
         splitter.addWidget(right_panel)
 
-        splitter.setSizes([200, 600, 400])
+        splitter.setSizes([150, 650, 400])
 
         self.apply_stylesheet()
         self.populate_ports()
