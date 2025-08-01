@@ -32,6 +32,98 @@ def get_serial_status() -> dict:
         }
     return status
 
+@mcp.tool()
+def query_serial_logs(pattern: str, max_results: int = 100) -> dict:
+    """在串口日志缓冲区中搜索匹配正则表达式的行
+    
+    Args:
+        pattern: 正则表达式模式，例如 "^.*reminder.*$"
+        max_results: 最大返回结果数量，默认100
+    
+    Returns:
+        包含匹配行和统计信息的字典
+    """
+    if not serial_service:
+        return {
+            "status": "error",
+            "message": "串口服务未初始化",
+            "matches": [],
+            "total_matches": 0,
+            "buffer_size": 0
+        }
+    
+    try:
+        # 搜索日志
+        matches = serial_service.search_logs(pattern, max_results)
+        buffer_size = len(serial_service.get_log_buffer())
+        
+        return {
+            "status": "success",
+            "message": f"找到 {len(matches)} 条匹配记录",
+            "matches": matches,
+            "total_matches": len(matches),
+            "buffer_size": buffer_size,
+            "pattern": pattern,
+            "max_results": max_results
+        }
+    except ValueError as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "matches": [],
+            "total_matches": 0,
+            "buffer_size": len(serial_service.get_log_buffer()) if serial_service else 0
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"搜索过程中发生错误: {str(e)}",
+            "matches": [],
+            "total_matches": 0,
+            "buffer_size": len(serial_service.get_log_buffer()) if serial_service else 0
+        }
+
+@mcp.tool()
+def get_log_buffer_info() -> dict:
+    """获取日志缓冲区的基本信息"""
+    if not serial_service:
+        return {
+            "status": "error",
+            "message": "串口服务未初始化",
+            "buffer_size": 0,
+            "max_buffer_size": 0
+        }
+    
+    buffer = serial_service.get_log_buffer()
+    return {
+        "status": "success",
+        "buffer_size": len(buffer),
+        "max_buffer_size": serial_service.max_log_lines,
+        "oldest_entry": buffer[0] if buffer else None,
+        "newest_entry": buffer[-1] if buffer else None
+    }
+
+@mcp.tool()
+def clear_log_buffer() -> dict:
+    """清空串口日志缓冲区"""
+    if not serial_service:
+        return {
+            "status": "error",
+            "message": "串口服务未初始化"
+        }
+    
+    try:
+        serial_service.clear_log_buffer()
+        return {
+            "status": "success",
+            "message": "日志缓冲区已清空"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"清空缓冲区时发生错误: {str(e)}"
+        }
+
 # TODO: 添加更多工具
 # @mcp.tool()
 # def send_serial_command(command: str, is_hex: bool = False, add_newline: bool = True) -> dict:
