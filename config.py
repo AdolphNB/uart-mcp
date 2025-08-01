@@ -8,7 +8,8 @@ DEFAULT_CONFIG = {
     "mcp_host": "127.0.0.1",
     "mcp_port": 8000,
     "last_serial_port": "",
-    "last_baud_rate": 115200
+    "last_baud_rate": 115200,
+    "show_timestamp": True
 }
 
 DEFAULT_PRESETS = [

@@ -57,6 +57,9 @@ class UartMcpApp(QMainWindow):
         left_layout.addWidget(receive_config_label)
         self.hex_receive_checkbox = QCheckBox("HEX显示")
         left_layout.addWidget(self.hex_receive_checkbox)
+        self.show_timestamp_checkbox = QCheckBox("显示时间戳")
+        self.show_timestamp_checkbox.setChecked(self.config.get("show_timestamp", True))
+        left_layout.addWidget(self.show_timestamp_checkbox)
 
         left_layout.addSpacing(20)
 
@@ -133,6 +136,9 @@ class UartMcpApp(QMainWindow):
         self.populate_ports()
         self.connect_signals()
         self.restore_last_port()
+        
+        # 初始化SerialService的时间戳设置
+        self.serial_service.set_show_timestamp(self.config.get("show_timestamp", True))
 
     def populate_ports(self):
         """从SerialService获取并填充可用串口列表"""
@@ -159,9 +165,11 @@ class UartMcpApp(QMainWindow):
         self.clear_button.clicked.connect(self.clear_display)
         self.send_button.clicked.connect(self.send_command)
         self.filter_input.textChanged.connect(self.filter_logs)
+        self.show_timestamp_checkbox.toggled.connect(self.toggle_timestamp)
 
         # SerialService signals
         self.serial_service.data_received.connect(self.handle_data_received)
+        self.serial_service.text_data_received.connect(self.handle_text_data_received)
         self.serial_service.connection_status_changed.connect(self.handle_connection_status)
         self.serial_service.error_occurred.connect(self.handle_serial_error)
 
@@ -206,23 +214,42 @@ class UartMcpApp(QMainWindow):
             display_command = command_text.upper() if is_hex else command_text
             self.append_to_log(f"[SENT] {display_command}")
             self.send_input.clear()
+    
+    def toggle_timestamp(self, checked):
+        """切换时间戳显示设置"""
+        self.serial_service.set_show_timestamp(checked)
+        # 保存设置到配置文件
+        self.config["show_timestamp"] = checked
+        config.save_config(self.config)
+
+    @pyqtSlot(str)
+    def handle_text_data_received(self, text_data):
+        """处理来自服务层的文本数据（仅在文本显示模式下使用）"""
+        # 只在非HEX显示模式下处理文本数据
+        if not self.hex_receive_checkbox.isChecked():
+            display_text = text_data
+            
+            # 根据时间戳设置决定是否添加时间戳
+            if self.show_timestamp_checkbox.isChecked():
+                timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+                display_text = f"[{timestamp}] {text_data}"
+            
+            self.append_to_log(display_text)
 
     @pyqtSlot(str)
     def handle_data_received(self, hex_data):
-        """处理来自服务层的原始HEX数据"""
-        timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-        display_text = ""
-        
+        """处理来自服务层的原始HEX数据（仅在HEX显示模式下使用）"""
+        # 只在HEX显示模式下处理HEX数据
         if self.hex_receive_checkbox.isChecked():
             # Format hex data with spaces
             display_text = ' '.join(hex_data[i:i+2] for i in range(0, len(hex_data), 2)).upper()
-        else:
-            try:
-                display_text = bytes.fromhex(hex_data).decode('utf-8').strip()
-            except (UnicodeDecodeError, ValueError):
-                display_text = f"[INVALID UTF-8] {' '.join(hex_data[i:i+2] for i in range(0, len(hex_data), 2)).upper()}"
-
-        self.append_to_log(f"[{timestamp}] {display_text}")
+            
+            # 根据时间戳设置决定是否添加时间戳
+            if self.show_timestamp_checkbox.isChecked():
+                timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+                display_text = f"[{timestamp}] {display_text}"
+            
+            self.append_to_log(display_text)
 
     @pyqtSlot(str)
     def handle_serial_error(self, error_message):

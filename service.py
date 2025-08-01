@@ -11,7 +11,8 @@ class SerialService(QObject):
     这个类是线程安全的，可以在GUI和MCP服务之间共享。
     """
     # Signals for GUI to connect to
-    data_received = pyqtSignal(str)
+    data_received = pyqtSignal(str)  # 原始hex数据
+    text_data_received = pyqtSignal(str)  # 解码后的文本数据（不带时间戳）
     connection_status_changed = pyqtSignal(bool, str) # is_connected, message
     error_occurred = pyqtSignal(str)
 
@@ -26,6 +27,9 @@ class SerialService(QObject):
         self.max_log_lines = max_log_lines
         self._log_buffer = deque(maxlen=max_log_lines)
         self._log_lock = threading.Lock()
+        
+        # 时间戳显示设置
+        self.show_timestamp = True
 
     def get_available_ports(self):
         """获取系统上所有可用的串口列表"""
@@ -89,9 +93,12 @@ class SerialService(QObject):
     def add_log_entry(self, log_line: str):
         """添加日志条目到缓冲区"""
         with self._log_lock:
-            timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-            timestamped_line = f"[{timestamp}] {log_line}"
-            self._log_buffer.append(timestamped_line)
+            if self.show_timestamp:
+                timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+                timestamped_line = f"[{timestamp}] {log_line}"
+                self._log_buffer.append(timestamped_line)
+            else:
+                self._log_buffer.append(log_line)
 
     def get_log_buffer(self):
         """获取当前日志缓冲区的所有内容"""
@@ -102,6 +109,10 @@ class SerialService(QObject):
         """清空日志缓冲区"""
         with self._log_lock:
             self._log_buffer.clear()
+    
+    def set_show_timestamp(self, show: bool):
+        """设置是否显示时间戳"""
+        self.show_timestamp = show
 
     def search_logs(self, pattern: str, max_results: int = 100):
         """在日志缓冲区中搜索匹配正则表达式的行"""
@@ -135,14 +146,19 @@ class SerialService(QObject):
                         # 尝试解码为文本
                         try:
                             decoded_line = line.decode('utf-8').strip()
-                            # 添加到日志缓冲区
+                            # 添加到日志缓冲区（根据show_timestamp设置）
                             self.add_log_entry(decoded_line)
-                            # 发送原始 hex 数据给 GUI
+                            # 发送解码后的文本数据给GUI（不带时间戳，让GUI处理格式）
+                            self.text_data_received.emit(decoded_line)
+                            # 发送原始hex数据给GUI（用于HEX显示模式）
                             self.data_received.emit(line.hex())
                         except UnicodeDecodeError:
                             # 如果无法解码为文本，仍然添加 hex 表示到日志
                             hex_repr = line.hex().upper()
                             self.add_log_entry(f"[HEX] {hex_repr}")
+                            # 发送HEX标记的文本数据给GUI
+                            self.text_data_received.emit(f"[HEX] {hex_repr}")
+                            # 发送原始hex数据给GUI
                             self.data_received.emit(line.hex())
             except serial.SerialException as e:
                 self._is_running = False

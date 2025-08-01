@@ -2,5 +2,6 @@
     "mcp_host": "127.0.0.1",
     "mcp_port": 8000,
     "last_serial_port": "COM15",
-    "last_baud_rate": 2000000
+    "last_baud_rate": 2000000,
+    "show_timestamp": false
 }
