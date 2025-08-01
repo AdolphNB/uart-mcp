@@ -1,37 +1,84 @@
-# UART MCP 工具使用说明
+# UART MCP Tool
 
-## 概述
+A Model Context Protocol (MCP) server that provides AI assistants with standardized interfaces for serial port communication, enabling seamless interaction with embedded systems and hardware devices.
 
-UART MCP 工具提供了一个基于 Model Context Protocol (MCP) 的串口通信服务，允许 AI 助手通过标准化接口与串口设备进行交互。
+## Overview
 
-## 启动模式
+The UART MCP Tool offers both a comprehensive GUI application for development and debugging, and a lightweight MCP server for AI integration. It supports real-time serial communication, log management, and command transmission with AI assistants like Claude.
 
-### 1. GUI 模式（推荐用于开发调试）
+## Features
+
+- 🔌 **Serial Port Management**: Connect to and manage serial devices with configurable parameters
+- 📊 **Real-time Data Monitoring**: Continuous serial data reception with timestamp support
+- 🔍 **Advanced Log Search**: Regex-based log filtering and querying capabilities
+- 📡 **Command Transmission**: Send text or hex commands to connected devices
+- 🤖 **AI Integration**: Full MCP server for seamless AI assistant interaction
+- 🎨 **GUI Application**: User-friendly interface for direct device interaction
+- ⚙️ **Configurable Settings**: Persistent configuration and preset commands
+
+## Installation
+
+### Prerequisites
+
+- Python 3.8 or higher
+- UV package manager (recommended) or pip
+
+### Setup
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd uart-mcp
+```
+
+2. Install dependencies:
+```bash
+uv sync
+```
+
+## Usage
+
+### 1. GUI Mode (Recommended for Development)
+
 ```bash
 uv run python main.py
 ```
-- 启动完整的图形界面应用
-- 同时在后台运行 MCP 服务
-- 适合直接操作和调试
 
-### 2. MCP 服务模式（推荐用于 AI 集成）
+**Features:**
+- Complete graphical interface with serial port configuration
+- Real-time data display with hex/text modes
+- Timestamp display toggle option
+- Log filtering and searching
+- Preset command buttons
+- Manual command transmission
+
+**Interface Layout:**
+- **Left Panel**: Port configuration, receive/send settings
+- **Center Panel**: Real-time serial data display
+- **Right Panel**: Log filtering and command transmission
+
+### 2. MCP Service Mode (Recommended for AI Integration)
+
 ```bash
 uv run python mcp_only.py
 ```
-- 仅启动 MCP 服务，无 GUI
-- 资源占用更少
-- 适合作为 AI 助手的后台服务
 
-## MCP 客户端配置
+**Features:**
+- Lightweight MCP server without GUI
+- Lower resource consumption
+- Perfect for AI assistant backend service
+- STDIO transport for direct integration
 
-### Claude Desktop 配置
+## MCP Client Configuration
 
-1. 找到 Claude Desktop 配置文件：
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Linux: `~/.config/Claude/claude_desktop_config.json`
+### Claude Desktop Setup
 
-2. 添加以下配置（请根据您的实际路径修改 `cwd` 字段）：
+1. Locate your Claude Desktop configuration file:
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+2. Add the following configuration (adjust the `cwd` path to your actual project directory):
 
 ```json
 {
@@ -48,120 +95,273 @@ uv run python mcp_only.py
 }
 ```
 
-3. 重启 Claude Desktop
+3. Restart Claude Desktop
 
-## 可用的 MCP 工具
+## MCP Interface Reference
 
-### get_serial_status
-获取当前串口连接状态和配置信息。
+### 1. `get_serial_status`
 
-**使用示例：**
-```
-请帮我检查串口连接状态
-```
+**Description**: Get current serial port connection status and configuration information.
 
-**返回信息：**
-- 连接状态（connected/disconnected）
-- 端口名称
-- 波特率
-- 数据位、停止位、校验位
-- 缓冲区统计
+**Parameters**: None
 
-### query_serial_logs
-在串口日志缓冲区中搜索匹配正则表达式的行。
-
-**参数：**
-- `pattern` (str): 正则表达式模式
-- `max_results` (int): 最大返回结果数量，默认100
-
-**使用示例：**
-```
-请在串口日志中搜索包含 "reminder" 的行
-请用正则表达式 "^.*Error.*$" 搜索所有错误日志
-请搜索温度相关的日志，模式是 ".*Temperature.*\d+.*°C.*"
+**Returns**:
+```json
+{
+  "status": "connected|disconnected",
+  "port": "COM3",
+  "baudrate": 115200,
+  "bytesize": 8,
+  "parity": "N",
+  "stopbits": 1
+}
 ```
 
-**返回信息：**
-- 匹配的日志行列表
-- 匹配数量统计
-- 缓冲区大小信息
-- 搜索状态和消息
+**Usage Example**: 
+> "Please check the serial port connection status"
 
-### get_log_buffer_info
-获取日志缓冲区的基本信息。
+### 2. `query_serial_logs`
 
-**使用示例：**
-```
-请告诉我当前日志缓冲区的状态
-```
+**Description**: Search for lines matching a regular expression pattern in the serial log buffer.
 
-**返回信息：**
-- 当前缓冲区大小
-- 最大缓冲区容量
-- 最旧和最新的日志条目
+**Parameters**:
+- `pattern` (str): Regular expression pattern (e.g., `"^.*reminder.*$"`)
+- `max_results` (int, optional): Maximum number of results to return (default: 100)
 
-### clear_log_buffer
-清空串口日志缓冲区。
-
-**使用示例：**
-```
-请清空串口日志缓冲区
+**Returns**:
+```json
+{
+  "status": "success",
+  "message": "Found 5 matching records",
+  "matches": ["[10:23:45.123] reminder: task completed", ...],
+  "total_matches": 5,
+  "buffer_size": 1000,
+  "pattern": ".*reminder.*",
+  "max_results": 100
+}
 ```
 
-**返回信息：**
-- 操作状态和结果消息
+**Usage Examples**:
+> "Search for lines containing 'reminder' in the serial logs"
+> "Use regex '^.*Error.*$' to find all error logs"
+> "Search for temperature logs with pattern '.*Temperature.*\\d+.*°C.*'"
 
-## 配置文件
+### 3. `get_log_buffer_info`
 
-### config.json
-主配置文件，包含：
-- `mcp_host`: MCP 服务监听地址（默认：127.0.0.1）
-- `mcp_port`: MCP 服务端口（默认：8000）
-- `last_serial_port`: 上次使用的串口
-- `last_baud_rate`: 上次使用的波特率
+**Description**: Get basic information about the log buffer.
 
-### presets.json
-预设命令配置，包含常用的串口命令：
+**Parameters**: None
+
+**Returns**:
+```json
+{
+  "status": "success",
+  "buffer_size": 850,
+  "max_buffer_size": 1000,
+  "oldest_entry": "[09:15:32.456] System startup",
+  "newest_entry": "[10:23:45.789] Data received"
+}
+```
+
+**Usage Example**: 
+> "Tell me about the current log buffer status"
+
+### 4. `clear_log_buffer`
+
+**Description**: Clear the serial port log buffer.
+
+**Parameters**: None
+
+**Returns**:
+```json
+{
+  "status": "success",
+  "message": "Log buffer cleared successfully"
+}
+```
+
+**Usage Example**: 
+> "Please clear the serial log buffer"
+
+### 5. `get_recent_logs`
+
+**Description**: Get the most recent N lines from the serial log buffer.
+
+**Parameters**:
+- `lines` (int, optional): Number of log lines to retrieve (default: 500)
+
+**Returns**:
+```json
+{
+  "status": "success",
+  "message": "Successfully retrieved 500 recent log lines",
+  "logs": ["[10:23:45.123] Data line 1", "..."],
+  "requested_lines": 500,
+  "actual_lines": 500,
+  "buffer_size": 1000
+}
+```
+
+**Usage Examples**:
+> "Get the last 100 lines from serial logs"
+> "Show me the most recent serial data"
+
+### 6. `send_serial_command`
+
+**Description**: Send commands to the serial port device.
+
+**Parameters**:
+- `command` (str): Command string to send (e.g., `"dbg reboot"`)
+- `is_hex` (bool, optional): Whether data is hexadecimal (default: False)
+- `add_newline` (bool, optional): Whether to automatically add `\r\n` (default: True)
+
+**Returns**:
+```json
+{
+  "status": "success",
+  "message": "Command sent successfully: \"dbg reboot\" + \\r\\n",
+  "command": "dbg reboot",
+  "sent": true,
+  "is_hex": false,
+  "add_newline": true
+}
+```
+
+**Usage Examples**:
+> "Send command 'dbg reboot' to the serial device"
+> "Send hex data '48656C6C6F' to the device"
+> "Send 'AT+GMR' without newline characters"
+
+## Configuration Files
+
+### `config.json`
+
+Main configuration file containing:
+
+```json
+{
+  "mcp_host": "127.0.0.1",
+  "mcp_port": 8000,
+  "last_serial_port": "COM3",
+  "last_baud_rate": 115200,
+  "show_timestamp": true
+}
+```
+
+- `mcp_host`: MCP server listening address
+- `mcp_port`: MCP server port (unused in STDIO mode)
+- `last_serial_port`: Last used serial port
+- `last_baud_rate`: Last used baud rate
+- `show_timestamp`: Whether to display timestamps in logs
+
+### `presets.json`
+
+Preset command configuration for quick access:
+
 ```json
 [
   {"name": "Reboot", "command": "dbg reboot"},
-  {"name": "LED On", "command": "dbg led on"},
-  {"name": "AT", "command": "AT"},
+  {"name": "ADFU Mode", "command": "dbg reboot adfu"},
+  {"name": "AT Command", "command": "AT"},
   {"name": "Version", "command": "AT+GMR"}
 ]
 ```
 
-## 故障排除
+## GUI Features
 
-### 1. MCP 服务无法启动
-- 检查端口 8000 是否被占用
-- 确认 Python 环境和依赖是否正确安装
+### Left Panel - Configuration
+- **Port Configuration**: Select COM port and baud rate
+- **Receive Settings**: 
+  - HEX display mode toggle
+  - Timestamp display toggle
+- **Send Settings**: 
+  - HEX send mode
+  - Automatic newline addition
 
-### 2. Claude Desktop 无法连接
-- 检查配置文件路径是否正确
-- 确认 `cwd` 路径指向项目目录
-- 重启 Claude Desktop
+### Center Panel - Data Display
+- Real-time serial data reception
+- Automatic scrolling
+- Copy and save functionality
+- Clear buffer button
 
-### 3. 串口连接问题
-- 确认串口设备已连接
-- 检查串口权限（Linux/macOS）
-- 确认波特率设置正确
+### Right Panel - Functions
+- **Log Filtering**: Keyword-based log filtering
+- **Command Transmission**: Manual command entry and sending
+- **Preset Commands**: Quick-access buttons for common commands
 
-## 开发扩展
+## Troubleshooting
 
-要添加新的 MCP 工具，请在 `mcp_server.py` 的 `McpService.__init__` 方法中使用装饰器模式：
+### 1. MCP Server Issues
+- Verify Python environment and dependencies are installed correctly
+- Check that no other process is using the same resources
+- Ensure proper file permissions
 
-```python
-@self.mcp_server.tool()
-async def your_new_tool(param1: str, param2: int) -> dict:
-    """您的新工具描述"""
-    # 实现您的功能
-    return {"result": "success"}
+### 2. Claude Desktop Connection Issues
+- Verify configuration file path is correct
+- Confirm `cwd` path points to the project directory
+- Restart Claude Desktop after configuration changes
+- Check console output for error messages
+
+### 3. Serial Port Connection Issues
+- Confirm serial device is properly connected
+- Check serial port permissions (Linux/macOS: may need to add user to dialout group)
+- Verify correct baud rate and communication parameters
+- Ensure no other application is using the serial port
+
+### 4. Permission Issues (Linux/macOS)
+```bash
+# Add user to dialout group for serial port access
+sudo usermod -a -G dialout $USER
+# Log out and log back in for changes to take effect
 ```
 
-## 技术支持
+## Development
 
-如有问题，请检查：
-1. 控制台输出的错误信息
-2. 配置文件格式是否正确
-3. 依赖库是否完整安装 
+### Adding New MCP Tools
+
+To extend functionality, add new tools in `mcp_server.py`:
+
+```python
+@mcp.tool()
+def your_new_tool(param1: str, param2: int = 100) -> dict:
+    """Your tool description for AI context"""
+    try:
+        # Implement your functionality here
+        result = your_implementation(param1, param2)
+        return {
+            "status": "success",
+            "data": result,
+            "message": "Operation completed successfully"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error occurred: {str(e)}"
+        }
+```
+
+### Project Structure
+
+```
+uart-mcp/
+├── main.py              # GUI application entry point
+├── mcp_only.py          # MCP server only mode
+├── mcp_server.py        # MCP server implementation
+├── service.py           # Serial communication service
+├── config.py            # Configuration management
+├── config.json          # Runtime configuration
+├── presets.json         # Command presets
+└── requirements.txt     # Python dependencies
+```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For issues and questions:
+1. Check console output for detailed error messages
+2. Verify configuration file formats are correct
+3. Ensure all dependencies are properly installed
+4. Review the troubleshooting section above 
