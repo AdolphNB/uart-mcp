@@ -4,15 +4,7 @@
         "command": "dbg reboot"
     },
     {
-        "name": "LED On",
-        "command": "dbg led on"
-    },
-    {
-        "name": "AT",
-        "command": "AT"
-    },
-    {
-        "name": "Version",
-        "command": "AT+GMR"
+        "name": "ADFU",
+        "command": "dbg reboot adfu"
     }
 ]

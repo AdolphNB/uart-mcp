@@ -90,6 +90,7 @@ class UartMcpApp(QMainWindow):
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
 
+        # 过滤日志区域（占2/3空间）
         filter_label = QLabel("过滤日志")
         right_layout.addWidget(filter_label)
         self.filter_input = QLineEdit()
@@ -98,26 +99,32 @@ class UartMcpApp(QMainWindow):
         self.filter_output = QTextEdit()
         self.filter_output.setReadOnly(True)
         self.filter_output.setStyleSheet("background-color: #2b2b2b; color: #a9b7c6;")
-        right_layout.addWidget(self.filter_output)
+        right_layout.addWidget(self.filter_output, 2)  # 设置stretch因子为2，占2/3空间
 
+        # 发送区域（占1/3空间）  
+        send_widget = QWidget()
+        send_layout = QVBoxLayout(send_widget)
+        send_layout.setContentsMargins(0, 10, 0, 0)
+        
         send_label = QLabel("发送区域")
-        right_layout.addWidget(send_label)
+        send_layout.addWidget(send_label)
         self.send_input = QLineEdit()
         self.send_input.setPlaceholderText("输入要发送的命令...")
-        right_layout.addWidget(self.send_input)
+        send_layout.addWidget(self.send_input)
         
         self.send_button = QPushButton("发送")
-        right_layout.addWidget(self.send_button)
+        send_layout.addWidget(self.send_button)
 
-        right_layout.addSpacing(20)
+        send_layout.addSpacing(10)
 
         preset_label = QLabel("预设命令")
-        right_layout.addWidget(preset_label)
+        send_layout.addWidget(preset_label)
         
         presets = config.load_presets()
-        self.setup_preset_buttons(right_layout, presets)
+        self.setup_preset_buttons(send_layout, presets)
 
-        right_layout.addStretch(1)
+        send_layout.addStretch(1)
+        right_layout.addWidget(send_widget, 1)  # 设置stretch因子为1，占1/3空间
         splitter.addWidget(right_panel)
 
         splitter.setSizes([200, 700, 300])
