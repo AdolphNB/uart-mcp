@@ -124,6 +124,69 @@ def clear_log_buffer() -> dict:
             "message": f"清空缓冲区时发生错误: {str(e)}"
         }
 
+@mcp.tool()
+def get_recent_logs(lines: int = 500) -> dict:
+    """获取最近N行串口日志（最新接收到的N行）
+    
+    Args:
+        lines: 要获取的日志行数，默认500行
+    
+    Returns:
+        包含最近N行日志和统计信息的字典
+    """
+    if not serial_service:
+        return {
+            "status": "error",
+            "message": "串口服务未初始化",
+            "logs": [],
+            "requested_lines": lines,
+            "actual_lines": 0,
+            "buffer_size": 0
+        }
+    
+    try:
+        # 参数验证
+        if lines < 0:
+            return {
+                "status": "error",
+                "message": "请求的日志行数不能为负数",
+                "logs": [],
+                "requested_lines": lines,
+                "actual_lines": 0,
+                "buffer_size": 0
+            }
+        
+        buffer = serial_service.get_log_buffer()
+        buffer_size = len(buffer)
+        
+        # 获取最近N行（最新的N行）
+        if lines == 0:
+            recent_logs = []
+        elif lines >= buffer_size:
+            # 如果请求的行数大于等于缓冲区大小，返回所有日志
+            recent_logs = buffer
+        else:
+            # 取最后N行（最新的N行）
+            recent_logs = buffer[-lines:]
+        
+        return {
+            "status": "success",
+            "message": f"成功获取最近 {len(recent_logs)} 行日志",
+            "logs": recent_logs,
+            "requested_lines": lines,
+            "actual_lines": len(recent_logs),
+            "buffer_size": buffer_size
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"获取日志时发生错误: {str(e)}",
+            "logs": [],
+            "requested_lines": lines,
+            "actual_lines": 0,
+            "buffer_size": len(serial_service.get_log_buffer()) if serial_service else 0
+        }
+
 # TODO: 添加更多工具
 # @mcp.tool()
 # def send_serial_command(command: str, is_hex: bool = False, add_newline: bool = True) -> dict:
