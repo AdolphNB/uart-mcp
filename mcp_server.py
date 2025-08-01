@@ -187,12 +187,70 @@ def get_recent_logs(lines: int = 500) -> dict:
             "buffer_size": len(serial_service.get_log_buffer()) if serial_service else 0
         }
 
+@mcp.tool()
+def send_serial_command(command: str, is_hex: bool = False, add_newline: bool = True) -> dict:
+    """发送命令到串口设备
+    
+    Args:
+        command: 要发送的命令字符串，例如 "dbg reboot"
+        is_hex: 是否为十六进制数据，默认False（文本模式）
+        add_newline: 是否自动添加换行符(\r\n)，默认True
+    
+    Returns:
+        包含发送结果的字典
+    """
+    if not serial_service:
+        return {
+            "status": "error",
+            "message": "串口服务未初始化",
+            "command": command,
+            "sent": False
+        }
+    
+    if not serial_service.is_connected():
+        return {
+            "status": "error", 
+            "message": "串口未连接，无法发送命令",
+            "command": command,
+            "sent": False
+        }
+    
+    try:
+        # 发送命令到串口
+        success = serial_service.send(command, is_hex=is_hex, add_newline=add_newline)
+        
+        if success:
+            # 构建实际发送的数据描述
+            if is_hex:
+                actual_data = f"HEX: {command}"
+            else:
+                actual_data = f'"{command}"' + (" + \\r\\n" if add_newline else "")
+            
+            return {
+                "status": "success",
+                "message": f"命令发送成功: {actual_data}",
+                "command": command,
+                "sent": True,
+                "is_hex": is_hex,
+                "add_newline": add_newline
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "命令发送失败，请检查串口连接",
+                "command": command,
+                "sent": False
+            }
+    
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"发送命令时发生错误: {str(e)}",
+            "command": command,
+            "sent": False
+        }
+
 # TODO: 添加更多工具
-# @mcp.tool()
-# def send_serial_command(command: str, is_hex: bool = False, add_newline: bool = True) -> dict:
-#     """发送命令到串口设备"""
-#     # 实现发送逻辑
-#     pass
 
 def set_serial_service(service: SerialService):
     """设置全局串口服务实例"""
