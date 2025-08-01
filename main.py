@@ -80,18 +80,10 @@ class UartMcpApp(QMainWindow):
         self.receive_text.setStyleSheet("background-color: #2b2b2b; color: #f0f0f0; font-family: 'Courier New';")
         center_layout.addWidget(self.receive_text)
 
-        # 创建清空按钮的水平布局
-        clear_layout = QHBoxLayout()
-        
+        # 创建清空按钮
         self.clear_button = QPushButton("清空全部")
         self.clear_button.setToolTip("清空显示内容和日志缓冲区")
-        clear_layout.addWidget(self.clear_button)
-        
-        self.clear_display_only_button = QPushButton("仅清空显示")
-        self.clear_display_only_button.setToolTip("仅清空显示内容，保留日志缓冲区")
-        clear_layout.addWidget(self.clear_display_only_button)
-        
-        center_layout.addLayout(clear_layout)
+        center_layout.addWidget(self.clear_button)
         splitter.addWidget(center_panel)
 
         # --- Right Panel: Functions ---
@@ -158,7 +150,6 @@ class UartMcpApp(QMainWindow):
         self.connect_button.clicked.connect(self.toggle_connection)
         self.refresh_button.clicked.connect(self.populate_ports)
         self.clear_button.clicked.connect(self.clear_display)
-        self.clear_display_only_button.clicked.connect(self.clear_display_only)
         self.send_button.clicked.connect(self.send_command)
         self.filter_input.textChanged.connect(self.filter_logs)
 
@@ -271,31 +262,17 @@ class UartMcpApp(QMainWindow):
     
     def clear_display(self):
         """清空接收显示区和底层日志缓冲区"""
-        # 询问用户确认
-        reply = QMessageBox.question(
-            self, 
-            '确认清空', 
-            '这将清空显示内容和所有日志缓冲区数据，此操作不可撤销。\n\n确定要继续吗？',
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            # 清空GUI显示
-            self.receive_text.clear()
-            self.filter_output.clear()
-            
-            # 同时清空串口服务的日志缓冲区
-            if self.serial_service:
-                buffer_size = len(self.serial_service.get_log_buffer())
-                self.serial_service.clear_log_buffer()
-                self.append_to_log(f"--- 已清空显示和日志缓冲区 (原有 {buffer_size} 条记录) ---")
-
-    def clear_display_only(self):
-        """仅清空显示区域，保留日志缓冲区"""
+        # 清空GUI显示
         self.receive_text.clear()
         self.filter_output.clear()
-        self.append_to_log("--- 已清空显示内容 (日志缓冲区保留) ---")
+        
+        # 同时清空串口服务的日志缓冲区
+        if self.serial_service:
+            buffer_size = len(self.serial_service.get_log_buffer())
+            self.serial_service.clear_log_buffer()
+            self.append_to_log(f"--- 已清空显示和日志缓冲区 (原有 {buffer_size} 条记录) ---")
+
+
 
     def filter_logs(self):
         """根据关键字过滤主显示区的内容"""
