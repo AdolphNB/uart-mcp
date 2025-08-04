@@ -8,11 +8,11 @@
         "command": "dbg reboot adfu"
     },
     {
-        "name": "AT Command",
-        "command": "AT"
+        "name": "MAC",
+        "command": "dbg getInfo mac"
     },
     {
         "name": "Version",
-        "command": "AT+GMR"
+        "command": "dbg getInfo version"
     }
 ]

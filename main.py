@@ -74,7 +74,6 @@ LANGUAGE_TEXTS = {
         'presets_tab': '预设命令',
         'language_label': '界面显示语言:',
         'mcp_config_label': 'Claude Desktop MCP 配置参考:',
-        'mcp_config_note': '注意: 请将 "cwd" 路径修改为您实际的项目目录路径。',
         'presets_config_label': '预设命令配置:',
         'preset_name': '名称',
         'preset_command': '命令',
@@ -98,7 +97,6 @@ SETTINGS_LANGUAGE_TEXTS = {
         'presets_tab': 'Preset Commands',
         'language_label': 'Interface Language:',
         'mcp_config_label': 'Claude Desktop MCP Configuration Reference:',
-        'mcp_config_note': 'Note: Please modify the "cwd" path to your actual project directory path.',
         'presets_config_label': 'Preset Command Configuration (Max 4):',
         'preset_name': 'Name',
         'preset_command': 'Command',
@@ -115,7 +113,6 @@ SETTINGS_LANGUAGE_TEXTS = {
         'presets_tab': '预设命令',
         'language_label': '界面显示语言:',
         'mcp_config_label': 'Claude Desktop MCP 配置参考:',
-        'mcp_config_note': '注意: 请将 "cwd" 路径修改为您实际的项目目录路径。',
         'presets_config_label': '预设命令配置 (最多4条):',
         'preset_name': '名称',
         'preset_command': '命令',
@@ -716,23 +713,24 @@ class SettingsDialog(QDialog):
         text_browser = QTextBrowser()
         mcp_config_text = """{
   "mcpServers": {
-    "uart-mcp": {
+    "Alan_zhang_uart": {
+      "name": "uart-mcp",
+      "type": "stdio",
+      "description": "",
+      "isActive": false,
+      "registryUrl": "",
       "command": "uv",
-      "args": ["run", "python", "mcp_only.py"],
-      "cwd": "D:\\\\workspace\\\\pythonTools\\\\uart-mcp",
-      "env": {
-        "PYTHONPATH": "D:\\\\workspace\\\\pythonTools\\\\uart-mcp"
-      }
+      "args": [
+        "--directory",
+        "D:\\workspace\\pythonTools\\uart-mcp",
+        "run",
+        "main.py"
+      ]
     }
   }
 }
-
-Configuration file locations:
-- Windows: %APPDATA%\\Claude\\claude_desktop_config.json
-- macOS: ~/Library/Application Support/Claude/claude_desktop_config.json  
-- Linux: ~/.config/Claude/claude_desktop_config.json
-
-""" + self.texts['mcp_config_note']
+Cusor or VScode config file location
+"""
         
         text_browser.setText(mcp_config_text)
         layout.addWidget(text_browser)
