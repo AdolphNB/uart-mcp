@@ -1,10 +1,10 @@
 [
     {
-        "name": "Reboot",
-        "command": "dbg reboot"
-    },
-    {
         "name": "ADFU",
         "command": "dbg reboot adfu"
+    },
+    {
+        "name": "reboot",
+        "command": "dbg reboot"
     }
 ]

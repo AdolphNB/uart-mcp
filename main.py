@@ -10,14 +10,142 @@ import config
 from service import SerialService
 from mcp_server import McpService
 
+# 语言文本字典
+LANGUAGE_TEXTS = {
+    'English': {
+        'window_title': 'UART MCP Tool',
+        'port_config': 'Port Configuration',
+        'connect': 'Connect',
+        'disconnect': 'Disconnect',
+        'refresh_list': 'Refresh List',
+        'receive_config': 'Receive Settings',
+        'hex_display': 'HEX Display',
+        'show_timestamp': 'Show Timestamp',
+        'send_config': 'Send Settings',
+        'hex_send': 'HEX Send',
+        'send_newline': 'Send \\r\\n',
+        'settings': 'Settings',
+        'clear_all': 'Clear All',
+        'filter_logs': 'Filter Logs',
+        'filter_placeholder': 'Enter keywords to filter...',
+        'send_area': 'Send Area',
+        'send_placeholder': 'Enter command to send...',
+        'send': 'Send',
+        'preset_commands': 'Preset Commands',
+        'connected_to': 'Connected to',
+        'connection_closed': 'Connection closed',
+        'error': 'Error',
+        'sent': 'SENT',
+        'no_ports': 'No available ports',
+        'no_ports_warning': 'No available ports.',
+        'cannot_open_port': 'Cannot open port'
+    },
+    'Chinese': {
+        'window_title': 'UART MCP 工具',
+        'port_config': '端口配置',
+        'connect': '连接',
+        'disconnect': '断开',
+        'refresh_list': '刷新列表',
+        'receive_config': '接收配置',
+        'hex_display': 'HEX显示',
+        'show_timestamp': '显示时间戳',
+        'send_config': '发送配置',
+        'hex_send': 'HEX发送',
+        'send_newline': '发送 \\r\\n',
+        'settings': '设置',
+        'clear_all': '清空全部',
+        'filter_logs': '过滤日志',
+        'filter_placeholder': '输入关键字过滤...',
+        'send_area': '发送区域',
+        'send_placeholder': '输入要发送的命令...',
+        'send': '发送',
+        'preset_commands': '预设命令',
+        'connected_to': '已连接到',
+        'connection_closed': '连接已断开',
+        'error': '错误',
+        'sent': '发送',
+        'no_ports': '无可用串口',
+        'no_ports_warning': '没有可用的串口。',
+        'cannot_open_port': '无法打开串口',
+        # 设置对话框
+        'settings_title': '设置',
+        'language_tab': '语言设置',
+        'mcp_tab': 'MCP配置',
+        'presets_tab': '预设命令',
+        'language_label': '界面显示语言:',
+        'mcp_config_label': 'Claude Desktop MCP 配置参考:',
+        'mcp_config_note': '注意: 请将 "cwd" 路径修改为您实际的项目目录路径。',
+        'presets_config_label': '预设命令配置:',
+        'preset_name': '名称',
+        'preset_command': '命令',
+        'add_preset': '添加',
+        'remove_preset': '删除',
+        'reset_presets': '重置为默认',
+        'new_command': '新命令',
+        'confirm_reset': '确认重置',
+        'reset_message': '确定要重置为默认预设命令吗？这将删除所有自定义预设。',
+        'ok': '确定',
+        'cancel': '取消'
+    }
+}
+
+# 设置对话框语言文本
+SETTINGS_LANGUAGE_TEXTS = {
+    'English': {
+        'settings_title': 'Settings',
+        'language_tab': 'Language',
+        'mcp_tab': 'MCP Config',
+        'presets_tab': 'Preset Commands',
+        'language_label': 'Interface Language:',
+        'mcp_config_label': 'Claude Desktop MCP Configuration Reference:',
+        'mcp_config_note': 'Note: Please modify the "cwd" path to your actual project directory path.',
+        'presets_config_label': 'Preset Command Configuration:',
+        'preset_name': 'Name',
+        'preset_command': 'Command',
+        'add_preset': 'Add',
+        'remove_preset': 'Remove',
+        'reset_presets': 'Reset to Default',
+        'new_command': 'New Command',
+        'confirm_reset': 'Confirm Reset',
+        'reset_message': 'Are you sure you want to reset to default preset commands? This will delete all custom presets.',
+        'ok': 'OK',
+        'cancel': 'Cancel'
+    },
+    'Chinese': {
+        'settings_title': '设置',
+        'language_tab': '语言设置',
+        'mcp_tab': 'MCP配置',
+        'presets_tab': '预设命令',
+        'language_label': '界面显示语言:',
+        'mcp_config_label': 'Claude Desktop MCP 配置参考:',
+        'mcp_config_note': '注意: 请将 "cwd" 路径修改为您实际的项目目录路径。',
+        'presets_config_label': '预设命令配置:',
+        'preset_name': '名称',
+        'preset_command': '命令',
+        'add_preset': '添加',
+        'remove_preset': '删除',
+        'reset_presets': '重置为默认',
+        'new_command': '新命令',
+        'confirm_reset': '确认重置',
+        'reset_message': '确定要重置为默认预设命令吗？这将删除所有自定义预设。',
+        'ok': '确定',
+        'cancel': '取消'
+    }
+}
+
 class UartMcpApp(QMainWindow):
     def __init__(self, serial_service, app_config):
         super().__init__()
-        self.setWindowTitle("UART MCP Tool")
-        self.setGeometry(100, 100, 1200, 800)
-
+        
         self.serial_service = serial_service
         self.config = app_config
+        
+        # 获取当前语言设置
+        self.current_language = self.config.get('language', 'English')
+        self.texts = LANGUAGE_TEXTS[self.current_language]
+        
+        self.setWindowTitle(self.texts['window_title'])
+        self.setGeometry(100, 100, 1200, 800)
 
         # --- UI Setup ---
         # Main widget and layout
@@ -34,8 +162,8 @@ class UartMcpApp(QMainWindow):
         left_layout = QVBoxLayout(left_panel)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
-        port_config_label = QLabel("端口配置")
-        left_layout.addWidget(port_config_label)
+        self.port_config_label = QLabel(self.texts['port_config'])
+        left_layout.addWidget(self.port_config_label)
         
         self.port_combo = QComboBox()
         left_layout.addWidget(self.port_combo)
@@ -45,37 +173,37 @@ class UartMcpApp(QMainWindow):
         self.baudrate_combo.setCurrentText(str(self.config.get("last_baud_rate", 115200)))
         left_layout.addWidget(self.baudrate_combo)
 
-        self.connect_button = QPushButton("连接")
+        self.connect_button = QPushButton(self.texts['connect'])
         left_layout.addWidget(self.connect_button)
         
-        self.refresh_button = QPushButton("刷新列表")
+        self.refresh_button = QPushButton(self.texts['refresh_list'])
         left_layout.addWidget(self.refresh_button)
 
         left_layout.addSpacing(20)
 
-        receive_config_label = QLabel("接收配置")
-        left_layout.addWidget(receive_config_label)
-        self.hex_receive_checkbox = QCheckBox("HEX显示")
+        self.receive_config_label = QLabel(self.texts['receive_config'])
+        left_layout.addWidget(self.receive_config_label)
+        self.hex_receive_checkbox = QCheckBox(self.texts['hex_display'])
         left_layout.addWidget(self.hex_receive_checkbox)
-        self.show_timestamp_checkbox = QCheckBox("显示时间戳")
+        self.show_timestamp_checkbox = QCheckBox(self.texts['show_timestamp'])
         self.show_timestamp_checkbox.setChecked(self.config.get("show_timestamp", True))
         left_layout.addWidget(self.show_timestamp_checkbox)
 
         left_layout.addSpacing(20)
 
-        send_config_label = QLabel("发送配置")
-        left_layout.addWidget(send_config_label)
-        self.hex_send_checkbox = QCheckBox("HEX发送")
+        self.send_config_label = QLabel(self.texts['send_config'])
+        left_layout.addWidget(self.send_config_label)
+        self.hex_send_checkbox = QCheckBox(self.texts['hex_send'])
         left_layout.addWidget(self.hex_send_checkbox)
-        self.add_newline_checkbox = QCheckBox("发送 \\r\\n")
+        self.add_newline_checkbox = QCheckBox(self.texts['send_newline'])
         self.add_newline_checkbox.setChecked(True)
         left_layout.addWidget(self.add_newline_checkbox)
 
         left_layout.addStretch(1)
         
         # 设置按钮
-        self.settings_button = QPushButton("设置")
-        self.settings_button.setToolTip("打开设置对话框")
+        self.settings_button = QPushButton(self.texts['settings'])
+        self.settings_button.setToolTip("Open settings dialog")
         left_layout.addWidget(self.settings_button)
         
         splitter.addWidget(left_panel)
@@ -90,8 +218,8 @@ class UartMcpApp(QMainWindow):
         center_layout.addWidget(self.receive_text)
 
         # 创建清空按钮
-        self.clear_button = QPushButton("清空全部")
-        self.clear_button.setToolTip("清空显示内容和日志缓冲区")
+        self.clear_button = QPushButton(self.texts['clear_all'])
+        self.clear_button.setToolTip("Clear display and log buffer")
         center_layout.addWidget(self.clear_button)
         splitter.addWidget(center_panel)
 
@@ -100,10 +228,10 @@ class UartMcpApp(QMainWindow):
         right_layout = QVBoxLayout(right_panel)
 
         # 过滤日志区域（占2/3空间）
-        filter_label = QLabel("过滤日志")
-        right_layout.addWidget(filter_label)
+        self.filter_label = QLabel(self.texts['filter_logs'])
+        right_layout.addWidget(self.filter_label)
         self.filter_input = QLineEdit()
-        self.filter_input.setPlaceholderText("输入关键字过滤...")
+        self.filter_input.setPlaceholderText(self.texts['filter_placeholder'])
         right_layout.addWidget(self.filter_input)
         self.filter_output = QTextEdit()
         self.filter_output.setReadOnly(True)
@@ -115,19 +243,19 @@ class UartMcpApp(QMainWindow):
         send_layout = QVBoxLayout(send_widget)
         send_layout.setContentsMargins(0, 10, 0, 0)
         
-        send_label = QLabel("发送区域")
-        send_layout.addWidget(send_label)
+        self.send_label = QLabel(self.texts['send_area'])
+        send_layout.addWidget(self.send_label)
         self.send_input = QLineEdit()
-        self.send_input.setPlaceholderText("输入要发送的命令...")
+        self.send_input.setPlaceholderText(self.texts['send_placeholder'])
         send_layout.addWidget(self.send_input)
         
-        self.send_button = QPushButton("发送")
+        self.send_button = QPushButton(self.texts['send'])
         send_layout.addWidget(self.send_button)
 
         send_layout.addSpacing(10)
 
-        preset_label = QLabel("预设命令")
-        send_layout.addWidget(preset_label)
+        self.preset_label = QLabel(self.texts['preset_commands'])
+        send_layout.addWidget(self.preset_label)
         
         presets = config.load_presets()
         self.preset_layout = send_layout  # 保存引用以便重新加载
@@ -152,7 +280,7 @@ class UartMcpApp(QMainWindow):
         self.port_combo.clear()
         ports = self.serial_service.get_available_ports()
         if not ports:
-            self.port_combo.addItem("无可用串口")
+            self.port_combo.addItem(self.texts['no_ports'])
         else:
             self.port_combo.addItems([port.device for port in ports])
     
@@ -187,24 +315,24 @@ class UartMcpApp(QMainWindow):
             self.serial_service.disconnect()
         else:
             port_name = self.port_combo.currentText()
-            if port_name == "无可用串口":
-                QMessageBox.warning(self, "连接错误", "没有可用的串口。")
+            if port_name == self.texts['no_ports']:
+                QMessageBox.warning(self, self.texts['error'], self.texts['no_ports_warning'])
                 return
             baud_rate = int(self.baudrate_combo.currentText())
             if not self.serial_service.connect(port_name, baud_rate):
-                QMessageBox.critical(self, "连接失败", f"无法打开串口 {port_name}")
+                QMessageBox.critical(self, self.texts['error'], f"{self.texts['cannot_open_port']} {port_name}")
 
     @pyqtSlot(bool, str)
     def handle_connection_status(self, is_connected, message):
         """处理来自服务层的连接状态变化"""
         self.append_to_log(f"--- {message} ---")
         if is_connected:
-            self.connect_button.setText("断开")
+            self.connect_button.setText(self.texts['disconnect'])
             self.port_combo.setEnabled(False)
             self.baudrate_combo.setEnabled(False)
             self.refresh_button.setEnabled(False)
         else:
-            self.connect_button.setText("连接")
+            self.connect_button.setText(self.texts['connect'])
             self.port_combo.setEnabled(True)
             self.baudrate_combo.setEnabled(True)
             self.refresh_button.setEnabled(True)
@@ -220,7 +348,7 @@ class UartMcpApp(QMainWindow):
 
         if self.serial_service.send(command_text, is_hex, add_newline):
             display_command = command_text.upper() if is_hex else command_text
-            self.append_to_log(f"[SENT] {display_command}")
+            self.append_to_log(f"[{self.texts['sent']}] {display_command}")
             self.send_input.clear()
     
     def toggle_timestamp(self, checked):
@@ -386,15 +514,52 @@ class UartMcpApp(QMainWindow):
         """应用设置变更"""
         # 保存语言设置
         if 'language' in settings:
+            old_language = self.config.get('language', 'English')
             self.config['language'] = settings['language']
             config.save_config(self.config)
-            # 这里可以添加重新加载界面语言的逻辑
+            # 如果语言发生变化，更新界面
+            if old_language != settings['language']:
+                self.update_language(settings['language'])
             
         # 保存预设命令变更
         if 'presets' in settings:
             config.save_presets(settings['presets'])
             # 重新加载预设按钮
             self.reload_preset_buttons()
+    
+    def update_language(self, language):
+        """更新界面语言"""
+        self.current_language = language
+        self.texts = LANGUAGE_TEXTS[language]
+        
+        # 更新窗口标题
+        self.setWindowTitle(self.texts['window_title'])
+        
+        # 更新左侧面板
+        self.port_config_label.setText(self.texts['port_config'])
+        self.connect_button.setText(self.texts['connect'])
+        self.refresh_button.setText(self.texts['refresh_list'])
+        self.receive_config_label.setText(self.texts['receive_config'])
+        self.hex_receive_checkbox.setText(self.texts['hex_display'])
+        self.show_timestamp_checkbox.setText(self.texts['show_timestamp'])
+        self.send_config_label.setText(self.texts['send_config'])
+        self.hex_send_checkbox.setText(self.texts['hex_send'])
+        self.add_newline_checkbox.setText(self.texts['send_newline'])
+        self.settings_button.setText(self.texts['settings'])
+        
+        # 更新中间面板
+        self.clear_button.setText(self.texts['clear_all'])
+        
+        # 更新右侧面板
+        self.filter_label.setText(self.texts['filter_logs'])
+        self.filter_input.setPlaceholderText(self.texts['filter_placeholder'])
+        self.send_label.setText(self.texts['send_area'])
+        self.send_input.setPlaceholderText(self.texts['send_placeholder'])
+        self.send_button.setText(self.texts['send'])
+        self.preset_label.setText(self.texts['preset_commands'])
+        
+        # 更新端口列表
+        self.populate_ports()
     
     def reload_preset_buttons(self):
         """重新加载预设命令按钮"""
@@ -423,11 +588,14 @@ class SettingsDialog(QDialog):
     def __init__(self, config_data, parent=None):
         super().__init__(parent)
         self.config_data = config_data
+        # 获取当前语言设置
+        self.current_language = config_data.get('language', 'English')
+        self.texts = SETTINGS_LANGUAGE_TEXTS[self.current_language]
         self.init_ui()
         
     def init_ui(self):
         """初始化UI"""
-        self.setWindowTitle("设置")
+        self.setWindowTitle(self.texts['settings_title'])
         self.setFixedSize(600, 500)
         
         # 应用暗色主题样式
@@ -515,22 +683,22 @@ class SettingsDialog(QDialog):
         
         # 标签1：语言切换
         self.language_tab = self.create_language_tab()
-        tab_widget.addTab(self.language_tab, "语言设置")
+        tab_widget.addTab(self.language_tab, self.texts['language_tab'])
         
         # 标签2：MCP配置参考
         self.mcp_tab = self.create_mcp_config_tab()
-        tab_widget.addTab(self.mcp_tab, "MCP配置")
+        tab_widget.addTab(self.mcp_tab, self.texts['mcp_tab'])
         
         # 标签3：预设命令配置
         self.presets_tab = self.create_presets_tab()
-        tab_widget.addTab(self.presets_tab, "预设命令")
+        tab_widget.addTab(self.presets_tab, self.texts['presets_tab'])
         
         # 底部按钮
         buttons_layout = QHBoxLayout()
         buttons_layout.addStretch(1)
         
-        self.ok_button = QPushButton("确定")
-        self.cancel_button = QPushButton("取消")
+        self.ok_button = QPushButton(self.texts['ok'])
+        self.cancel_button = QPushButton(self.texts['cancel'])
         
         self.ok_button.clicked.connect(self.accept)
         self.cancel_button.clicked.connect(self.reject)
@@ -544,7 +712,7 @@ class SettingsDialog(QDialog):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        label = QLabel("界面显示语言:")
+        label = QLabel(self.texts['language_label'])
         layout.addWidget(label)
         
         self.language_combo = QComboBox()
@@ -565,7 +733,7 @@ class SettingsDialog(QDialog):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        label = QLabel("Claude Desktop MCP 配置参考:")
+        label = QLabel(self.texts['mcp_config_label'])
         layout.addWidget(label)
         
         # 创建文本浏览器显示配置
@@ -583,12 +751,12 @@ class SettingsDialog(QDialog):
   }
 }
 
-配置文件位置:
+Configuration file locations:
 - Windows: %APPDATA%\\Claude\\claude_desktop_config.json
 - macOS: ~/Library/Application Support/Claude/claude_desktop_config.json  
 - Linux: ~/.config/Claude/claude_desktop_config.json
 
-注意: 请将 "cwd" 路径修改为您实际的项目目录路径。"""
+""" + self.texts['mcp_config_note']
         
         text_browser.setText(mcp_config_text)
         layout.addWidget(text_browser)
@@ -600,13 +768,13 @@ class SettingsDialog(QDialog):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        label = QLabel("预设命令配置:")
+        label = QLabel(self.texts['presets_config_label'])
         layout.addWidget(label)
         
         # 创建表格显示预设命令
         self.presets_table = QTableWidget()
         self.presets_table.setColumnCount(2)
-        self.presets_table.setHorizontalHeaderLabels(["名称", "命令"])
+        self.presets_table.setHorizontalHeaderLabels([self.texts['preset_name'], self.texts['preset_command']])
         
         # 设置表格属性
         header = self.presets_table.horizontalHeader()
@@ -620,9 +788,9 @@ class SettingsDialog(QDialog):
         
         # 按钮区域
         buttons_layout = QHBoxLayout()
-        self.add_preset_button = QPushButton("添加")
-        self.remove_preset_button = QPushButton("删除")
-        self.reset_presets_button = QPushButton("重置为默认")
+        self.add_preset_button = QPushButton(self.texts['add_preset'])
+        self.remove_preset_button = QPushButton(self.texts['remove_preset'])
+        self.reset_presets_button = QPushButton(self.texts['reset_presets'])
         
         self.add_preset_button.clicked.connect(self.add_preset_row)
         self.remove_preset_button.clicked.connect(self.remove_preset_row)
@@ -652,7 +820,7 @@ class SettingsDialog(QDialog):
         """添加预设命令行"""
         row_count = self.presets_table.rowCount()
         self.presets_table.insertRow(row_count)
-        self.presets_table.setItem(row_count, 0, QTableWidgetItem("新命令"))
+        self.presets_table.setItem(row_count, 0, QTableWidgetItem(self.texts['new_command']))
         self.presets_table.setItem(row_count, 1, QTableWidgetItem(""))
     
     def remove_preset_row(self):
@@ -663,7 +831,7 @@ class SettingsDialog(QDialog):
     
     def reset_presets(self):
         """重置为默认预设命令"""
-        reply = QMessageBox.question(self, "确认重置", "确定要重置为默认预设命令吗？这将删除所有自定义预设。",
+        reply = QMessageBox.question(self, self.texts['confirm_reset'], self.texts['reset_message'],
                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
             # 清空表格并加载默认预设
