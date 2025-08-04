@@ -99,13 +99,10 @@ SETTINGS_LANGUAGE_TEXTS = {
         'language_label': 'Interface Language:',
         'mcp_config_label': 'Claude Desktop MCP Configuration Reference:',
         'mcp_config_note': 'Note: Please modify the "cwd" path to your actual project directory path.',
-        'presets_config_label': 'Preset Command Configuration:',
+        'presets_config_label': 'Preset Command Configuration (Max 4):',
         'preset_name': 'Name',
         'preset_command': 'Command',
-        'add_preset': 'Add',
-        'remove_preset': 'Remove',
         'reset_presets': 'Reset to Default',
-        'new_command': 'New Command',
         'confirm_reset': 'Confirm Reset',
         'reset_message': 'Are you sure you want to reset to default preset commands? This will delete all custom presets.',
         'ok': 'OK',
@@ -119,13 +116,10 @@ SETTINGS_LANGUAGE_TEXTS = {
         'language_label': '界面显示语言:',
         'mcp_config_label': 'Claude Desktop MCP 配置参考:',
         'mcp_config_note': '注意: 请将 "cwd" 路径修改为您实际的项目目录路径。',
-        'presets_config_label': '预设命令配置:',
+        'presets_config_label': '预设命令配置 (最多4条):',
         'preset_name': '名称',
         'preset_command': '命令',
-        'add_preset': '添加',
-        'remove_preset': '删除',
         'reset_presets': '重置为默认',
-        'new_command': '新命令',
         'confirm_reset': '确认重置',
         'reset_message': '确定要重置为默认预设命令吗？这将删除所有自定义预设。',
         'ok': '确定',
@@ -654,25 +648,7 @@ class SettingsDialog(QDialog):
                 font-family: 'Courier New', monospace;
                 color: #f0f0f0;
             }
-            QTableWidget {
-                background-color: #333;
-                border: 1px solid #555;
-                gridline-color: #555;
-                color: #f0f0f0;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #555;
-            }
-            QTableWidget::item:selected {
-                background-color: #555;
-            }
-            QHeaderView::section {
-                background-color: #444;
-                color: #f0f0f0;
-                padding: 8px;
-                border: 1px solid #555;
-            }
+
         """)
         
         layout = QVBoxLayout(self)
@@ -771,33 +747,103 @@ Configuration file locations:
         label = QLabel(self.texts['presets_config_label'])
         layout.addWidget(label)
         
-        # 创建表格显示预设命令
-        self.presets_table = QTableWidget()
-        self.presets_table.setColumnCount(2)
-        self.presets_table.setHorizontalHeaderLabels([self.texts['preset_name'], self.texts['preset_command']])
+        # 创建自定义的预设编辑区域，替代表格
+        presets_container = QWidget()
+        presets_container.setStyleSheet("""
+            QWidget {
+                background-color: #2b2b2b;
+                border: 1px solid #555;
+            }
+        """)
+        presets_layout = QVBoxLayout(presets_container)
+        presets_layout.setContentsMargins(10, 10, 10, 10)
+        presets_layout.setSpacing(5)
         
-        # 设置表格属性
-        header = self.presets_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        # 创建表头
+        header_layout = QHBoxLayout()
+        name_header = QLabel(self.texts['preset_name'])
+        command_header = QLabel(self.texts['preset_command'])
+        name_header.setStyleSheet("""
+            QLabel {
+                color: #f0f0f0;
+                font-weight: bold;
+                padding: 8px;
+                background-color: #444;
+                border-bottom: 1px solid #555;
+            }
+        """)
+        command_header.setStyleSheet("""
+            QLabel {
+                color: #f0f0f0;
+                font-weight: bold;
+                padding: 8px;
+                background-color: #444;
+                border-bottom: 1px solid #555;
+            }
+        """)
+        name_header.setFixedWidth(120)
+        header_layout.addWidget(name_header)
+        header_layout.addWidget(command_header)
+        presets_layout.addLayout(header_layout)
         
-        # 加载现有预设
-        self.load_presets_to_table()
+        # 创建4行预设输入框
+        self.preset_inputs = []
+        for i in range(4):
+            row_layout = QHBoxLayout()
+            row_layout.setSpacing(0)
+            
+            # 名称输入框
+            name_input = QLineEdit()
+            name_input.setFixedWidth(120)
+            name_input.setStyleSheet("""
+                QLineEdit {
+                    color: #f0f0f0;
+                    background-color: #2b2b2b;
+                    border: 1px solid #555;
+                    border-right: none;
+                    padding: 8px;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #0078d4;
+                    border-right: 1px solid #0078d4;
+                }
+            """)
+            
+            # 命令输入框
+            command_input = QLineEdit()
+            command_input.setStyleSheet("""
+                QLineEdit {
+                    color: #f0f0f0;
+                    background-color: #2b2b2b;
+                    border: 1px solid #555;
+                    padding: 8px;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #0078d4;
+                }
+            """)
+            
+            row_layout.addWidget(name_input)
+            row_layout.addWidget(command_input)
+            presets_layout.addLayout(row_layout)
+            
+            # 保存输入框引用
+            self.preset_inputs.append({
+                'name': name_input,
+                'command': command_input
+            })
         
-        layout.addWidget(self.presets_table)
+        # 加载现有预设到输入框
+        self.load_presets_to_inputs()
+        
+        layout.addWidget(presets_container)
         
         # 按钮区域
         buttons_layout = QHBoxLayout()
-        self.add_preset_button = QPushButton(self.texts['add_preset'])
-        self.remove_preset_button = QPushButton(self.texts['remove_preset'])
         self.reset_presets_button = QPushButton(self.texts['reset_presets'])
         
-        self.add_preset_button.clicked.connect(self.add_preset_row)
-        self.remove_preset_button.clicked.connect(self.remove_preset_row)
         self.reset_presets_button.clicked.connect(self.reset_presets)
         
-        buttons_layout.addWidget(self.add_preset_button)
-        buttons_layout.addWidget(self.remove_preset_button)
         buttons_layout.addWidget(self.reset_presets_button)
         buttons_layout.addStretch(1)
         
@@ -805,47 +851,42 @@ Configuration file locations:
         
         return widget
     
-    def load_presets_to_table(self):
-        """加载预设命令到表格"""
+    def load_presets_to_inputs(self):
+        """加载预设命令到输入框（固定4行）"""
         presets = config.load_presets()
-        self.presets_table.setRowCount(len(presets))
         
-        for i, preset in enumerate(presets):
-            name_item = QTableWidgetItem(preset.get('name', ''))
-            command_item = QTableWidgetItem(preset.get('command', ''))
-            self.presets_table.setItem(i, 0, name_item)
-            self.presets_table.setItem(i, 1, command_item)
+        # 填充前4条预设，不足的用空白填充
+        for i in range(4):
+            if i < len(presets):
+                preset = presets[i]
+                name = preset.get('name', '')
+                command = preset.get('command', '')
+            else:
+                name = ''
+                command = ''
+            
+            self.preset_inputs[i]['name'].setText(name)
+            self.preset_inputs[i]['command'].setText(command)
     
-    def add_preset_row(self):
-        """添加预设命令行"""
-        row_count = self.presets_table.rowCount()
-        self.presets_table.insertRow(row_count)
-        self.presets_table.setItem(row_count, 0, QTableWidgetItem(self.texts['new_command']))
-        self.presets_table.setItem(row_count, 1, QTableWidgetItem(""))
-    
-    def remove_preset_row(self):
-        """删除选中的预设命令行"""
-        current_row = self.presets_table.currentRow()
-        if current_row >= 0:
-            self.presets_table.removeRow(current_row)
+
     
     def reset_presets(self):
         """重置为默认预设命令"""
         reply = QMessageBox.question(self, self.texts['confirm_reset'], self.texts['reset_message'],
                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
-            # 清空表格并加载默认预设
-            self.presets_table.setRowCount(0)
-            default_presets = [
-                {"name": "Reboot", "command": "dbg reboot"},
-                {"name": "ADFU Mode", "command": "dbg reboot adfu"},
-                {"name": "AT Command", "command": "AT"},
-                {"name": "Version", "command": "AT+GMR"}
-            ]
-            self.presets_table.setRowCount(len(default_presets))
-            for i, preset in enumerate(default_presets):
-                self.presets_table.setItem(i, 0, QTableWidgetItem(preset['name']))
-                self.presets_table.setItem(i, 1, QTableWidgetItem(preset['command']))
+            # 使用配置文件中的默认预设（4条）
+            default_presets = config.DEFAULT_PRESETS
+            
+            # 固定为4行，填充默认预设
+            for i in range(4):
+                if i < len(default_presets):
+                    preset = default_presets[i]
+                    self.preset_inputs[i]['name'].setText(preset['name'])
+                    self.preset_inputs[i]['command'].setText(preset['command'])
+                else:
+                    self.preset_inputs[i]['name'].setText('')
+                    self.preset_inputs[i]['command'].setText('')
     
     def get_settings(self):
         """获取设置数据"""
@@ -855,16 +896,13 @@ Configuration file locations:
         language_text = self.language_combo.currentText()
         settings['language'] = 'Chinese' if language_text == '中文' else 'English'
         
-        # 预设命令设置
+        # 预设命令设置（固定4行）
         presets = []
-        for i in range(self.presets_table.rowCount()):
-            name_item = self.presets_table.item(i, 0)
-            command_item = self.presets_table.item(i, 1)
-            if name_item and command_item:
-                name = name_item.text().strip()
-                command = command_item.text().strip()
-                if name and command:  # 只保存非空的预设
-                    presets.append({"name": name, "command": command})
+        for i in range(4):  # 固定读取4行
+            name = self.preset_inputs[i]['name'].text().strip()
+            command = self.preset_inputs[i]['command'].text().strip()
+            if name and command:  # 只保存非空的预设
+                presets.append({"name": name, "command": command})
         settings['presets'] = presets
         
         return settings

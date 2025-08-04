@@ -15,7 +15,9 @@ DEFAULT_CONFIG = {
 
 DEFAULT_PRESETS = [
     {"name": "Reboot", "command": "dbg reboot"},
-    {"name": "adfu", "command": "dbg reboot adfu"},
+    {"name": "ADFU Mode", "command": "dbg reboot adfu"},
+    {"name": "AT Command", "command": "AT"},
+    {"name": "Version", "command": "AT+GMR"}
 ]
 
 def load_config():

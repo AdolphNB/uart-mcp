@@ -1,10 +1,18 @@
 [
     {
-        "name": "ADFU",
+        "name": "Reboot",
+        "command": "dbg reboot"
+    },
+    {
+        "name": "ADFU Mode",
         "command": "dbg reboot adfu"
     },
     {
-        "name": "reboot",
-        "command": "dbg reboot"
+        "name": "AT Command",
+        "command": "AT"
+    },
+    {
+        "name": "Version",
+        "command": "AT+GMR"
     }
 ]
