@@ -9,7 +9,8 @@ DEFAULT_CONFIG = {
     "mcp_port": 8000,
     "last_serial_port": "",
     "last_baud_rate": 115200,
-    "show_timestamp": True
+    "show_timestamp": True,
+    "language": "English"
 }
 
 DEFAULT_PRESETS = [

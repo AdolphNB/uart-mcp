@@ -3,7 +3,7 @@ import asyncio
 import threading
 from datetime import datetime
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QPushButton, QComboBox, QCheckBox, QLabel, QLineEdit, QSplitter, QMessageBox
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QPushButton, QComboBox, QCheckBox, QLabel, QLineEdit, QSplitter, QMessageBox, QDialog, QTabWidget, QTextBrowser, QTableWidget, QTableWidgetItem, QHeaderView
 from PyQt6.QtCore import Qt, pyqtSlot
 
 import config
@@ -19,7 +19,7 @@ class UartMcpApp(QMainWindow):
         self.serial_service = serial_service
         self.config = app_config
 
-        # --- UI Setup (same as before, but remove direct serial logic) ---
+        # --- UI Setup ---
         # Main widget and layout
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -72,6 +72,12 @@ class UartMcpApp(QMainWindow):
         left_layout.addWidget(self.add_newline_checkbox)
 
         left_layout.addStretch(1)
+        
+        # 设置按钮
+        self.settings_button = QPushButton("设置")
+        self.settings_button.setToolTip("打开设置对话框")
+        left_layout.addWidget(self.settings_button)
+        
         splitter.addWidget(left_panel)
 
         # --- Center Panel: Receive Display ---
@@ -124,6 +130,7 @@ class UartMcpApp(QMainWindow):
         send_layout.addWidget(preset_label)
         
         presets = config.load_presets()
+        self.preset_layout = send_layout  # 保存引用以便重新加载
         self.setup_preset_buttons(send_layout, presets)
 
         send_layout.addStretch(1)
@@ -166,6 +173,7 @@ class UartMcpApp(QMainWindow):
         self.send_button.clicked.connect(self.send_command)
         self.filter_input.textChanged.connect(self.filter_logs)
         self.show_timestamp_checkbox.toggled.connect(self.toggle_timestamp)
+        self.settings_button.clicked.connect(self.show_settings_dialog)
 
         # SerialService signals
         self.serial_service.data_received.connect(self.handle_data_received)
@@ -274,6 +282,7 @@ class UartMcpApp(QMainWindow):
                 continue
 
             button = QPushButton(btn_name)
+            button.setObjectName(f"preset_{btn_name}")  # 设置对象名称以便删除
             button.clicked.connect(lambda checked, cmd=command: self.send_preset_command(cmd))
             current_row_layout.addWidget(button)
             if current_row_layout.count() >= max_buttons_per_row:
@@ -365,6 +374,333 @@ class UartMcpApp(QMainWindow):
                 height: 5px;
             }
         """)
+
+    def show_settings_dialog(self):
+        """显示设置对话框"""
+        dialog = SettingsDialog(self.config, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # 处理设置变更
+            self.apply_settings_changes(dialog.get_settings())
+    
+    def apply_settings_changes(self, settings):
+        """应用设置变更"""
+        # 保存语言设置
+        if 'language' in settings:
+            self.config['language'] = settings['language']
+            config.save_config(self.config)
+            # 这里可以添加重新加载界面语言的逻辑
+            
+        # 保存预设命令变更
+        if 'presets' in settings:
+            config.save_presets(settings['presets'])
+            # 重新加载预设按钮
+            self.reload_preset_buttons()
+    
+    def reload_preset_buttons(self):
+        """重新加载预设命令按钮"""
+        presets = config.load_presets()
+        # 找到预设按钮的容器并清空
+        for i in reversed(range(self.preset_layout.count())):
+            item = self.preset_layout.itemAt(i)
+            if item:
+                widget = item.widget()
+                if widget and hasattr(widget, 'layout') and widget.layout():
+                    # 检查是否包含预设按钮
+                    for j in reversed(range(widget.layout().count())):
+                        button_item = widget.layout().itemAt(j)
+                        if button_item:
+                            button = button_item.widget()
+                            if button and hasattr(button, 'objectName') and button.objectName().startswith('preset_'):
+                                widget.setParent(None)
+                                break
+        # 重新创建预设按钮
+        self.setup_preset_buttons(self.preset_layout, presets)
+
+
+class SettingsDialog(QDialog):
+    """设置对话框"""
+    
+    def __init__(self, config_data, parent=None):
+        super().__init__(parent)
+        self.config_data = config_data
+        self.init_ui()
+        
+    def init_ui(self):
+        """初始化UI"""
+        self.setWindowTitle("设置")
+        self.setFixedSize(600, 500)
+        
+        # 应用暗色主题样式
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #2b2b2b;
+                color: #f0f0f0;
+            }
+            QTabWidget {
+                background-color: #2b2b2b;
+                border: none;
+            }
+            QTabWidget::pane {
+                border: 1px solid #555;
+                background-color: #2b2b2b;
+            }
+            QTabWidget::tab-bar {
+                alignment: center;
+            }
+            QTabBar::tab {
+                background-color: #444;
+                color: #f0f0f0;
+                padding: 8px 16px;
+                margin-right: 2px;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+            QTabBar::tab:selected {
+                background-color: #555;
+            }
+            QTabBar::tab:hover {
+                background-color: #666;
+            }
+            QLabel {
+                color: #f0f0f0;
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+            QComboBox, QLineEdit, QPushButton {
+                padding: 5px;
+                background-color: #555;
+                border: 1px solid #666;
+                border-radius: 3px;
+                color: #f0f0f0;
+            }
+            QPushButton:hover {
+                background-color: #666;
+            }
+            QPushButton:pressed {
+                background-color: #777;
+            }
+            QTextBrowser {
+                background-color: #333;
+                border: 1px solid #555;
+                padding: 10px;
+                font-family: 'Courier New', monospace;
+                color: #f0f0f0;
+            }
+            QTableWidget {
+                background-color: #333;
+                border: 1px solid #555;
+                gridline-color: #555;
+                color: #f0f0f0;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #555;
+            }
+            QTableWidget::item:selected {
+                background-color: #555;
+            }
+            QHeaderView::section {
+                background-color: #444;
+                color: #f0f0f0;
+                padding: 8px;
+                border: 1px solid #555;
+            }
+        """)
+        
+        layout = QVBoxLayout(self)
+        
+        # 创建选项卡
+        tab_widget = QTabWidget()
+        layout.addWidget(tab_widget)
+        
+        # 标签1：语言切换
+        self.language_tab = self.create_language_tab()
+        tab_widget.addTab(self.language_tab, "语言设置")
+        
+        # 标签2：MCP配置参考
+        self.mcp_tab = self.create_mcp_config_tab()
+        tab_widget.addTab(self.mcp_tab, "MCP配置")
+        
+        # 标签3：预设命令配置
+        self.presets_tab = self.create_presets_tab()
+        tab_widget.addTab(self.presets_tab, "预设命令")
+        
+        # 底部按钮
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch(1)
+        
+        self.ok_button = QPushButton("确定")
+        self.cancel_button = QPushButton("取消")
+        
+        self.ok_button.clicked.connect(self.accept)
+        self.cancel_button.clicked.connect(self.reject)
+        
+        buttons_layout.addWidget(self.ok_button)
+        buttons_layout.addWidget(self.cancel_button)
+        layout.addLayout(buttons_layout)
+    
+    def create_language_tab(self):
+        """创建语言设置标签页"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        label = QLabel("界面显示语言:")
+        layout.addWidget(label)
+        
+        self.language_combo = QComboBox()
+        self.language_combo.addItems(["English", "中文"])
+        current_language = self.config_data.get('language', 'English')
+        if current_language == 'Chinese':
+            self.language_combo.setCurrentText("中文")
+        else:
+            self.language_combo.setCurrentText("English")
+        
+        layout.addWidget(self.language_combo)
+        layout.addStretch(1)
+        
+        return widget
+    
+    def create_mcp_config_tab(self):
+        """创建MCP配置参考标签页"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        label = QLabel("Claude Desktop MCP 配置参考:")
+        layout.addWidget(label)
+        
+        # 创建文本浏览器显示配置
+        text_browser = QTextBrowser()
+        mcp_config_text = """{
+  "mcpServers": {
+    "uart-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "mcp_only.py"],
+      "cwd": "D:\\\\workspace\\\\pythonTools\\\\uart-mcp",
+      "env": {
+        "PYTHONPATH": "D:\\\\workspace\\\\pythonTools\\\\uart-mcp"
+      }
+    }
+  }
+}
+
+配置文件位置:
+- Windows: %APPDATA%\\Claude\\claude_desktop_config.json
+- macOS: ~/Library/Application Support/Claude/claude_desktop_config.json  
+- Linux: ~/.config/Claude/claude_desktop_config.json
+
+注意: 请将 "cwd" 路径修改为您实际的项目目录路径。"""
+        
+        text_browser.setText(mcp_config_text)
+        layout.addWidget(text_browser)
+        
+        return widget
+    
+    def create_presets_tab(self):
+        """创建预设命令配置标签页"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        label = QLabel("预设命令配置:")
+        layout.addWidget(label)
+        
+        # 创建表格显示预设命令
+        self.presets_table = QTableWidget()
+        self.presets_table.setColumnCount(2)
+        self.presets_table.setHorizontalHeaderLabels(["名称", "命令"])
+        
+        # 设置表格属性
+        header = self.presets_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        
+        # 加载现有预设
+        self.load_presets_to_table()
+        
+        layout.addWidget(self.presets_table)
+        
+        # 按钮区域
+        buttons_layout = QHBoxLayout()
+        self.add_preset_button = QPushButton("添加")
+        self.remove_preset_button = QPushButton("删除")
+        self.reset_presets_button = QPushButton("重置为默认")
+        
+        self.add_preset_button.clicked.connect(self.add_preset_row)
+        self.remove_preset_button.clicked.connect(self.remove_preset_row)
+        self.reset_presets_button.clicked.connect(self.reset_presets)
+        
+        buttons_layout.addWidget(self.add_preset_button)
+        buttons_layout.addWidget(self.remove_preset_button)
+        buttons_layout.addWidget(self.reset_presets_button)
+        buttons_layout.addStretch(1)
+        
+        layout.addLayout(buttons_layout)
+        
+        return widget
+    
+    def load_presets_to_table(self):
+        """加载预设命令到表格"""
+        presets = config.load_presets()
+        self.presets_table.setRowCount(len(presets))
+        
+        for i, preset in enumerate(presets):
+            name_item = QTableWidgetItem(preset.get('name', ''))
+            command_item = QTableWidgetItem(preset.get('command', ''))
+            self.presets_table.setItem(i, 0, name_item)
+            self.presets_table.setItem(i, 1, command_item)
+    
+    def add_preset_row(self):
+        """添加预设命令行"""
+        row_count = self.presets_table.rowCount()
+        self.presets_table.insertRow(row_count)
+        self.presets_table.setItem(row_count, 0, QTableWidgetItem("新命令"))
+        self.presets_table.setItem(row_count, 1, QTableWidgetItem(""))
+    
+    def remove_preset_row(self):
+        """删除选中的预设命令行"""
+        current_row = self.presets_table.currentRow()
+        if current_row >= 0:
+            self.presets_table.removeRow(current_row)
+    
+    def reset_presets(self):
+        """重置为默认预设命令"""
+        reply = QMessageBox.question(self, "确认重置", "确定要重置为默认预设命令吗？这将删除所有自定义预设。",
+                                   QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            # 清空表格并加载默认预设
+            self.presets_table.setRowCount(0)
+            default_presets = [
+                {"name": "Reboot", "command": "dbg reboot"},
+                {"name": "ADFU Mode", "command": "dbg reboot adfu"},
+                {"name": "AT Command", "command": "AT"},
+                {"name": "Version", "command": "AT+GMR"}
+            ]
+            self.presets_table.setRowCount(len(default_presets))
+            for i, preset in enumerate(default_presets):
+                self.presets_table.setItem(i, 0, QTableWidgetItem(preset['name']))
+                self.presets_table.setItem(i, 1, QTableWidgetItem(preset['command']))
+    
+    def get_settings(self):
+        """获取设置数据"""
+        settings = {}
+        
+        # 语言设置
+        language_text = self.language_combo.currentText()
+        settings['language'] = 'Chinese' if language_text == '中文' else 'English'
+        
+        # 预设命令设置
+        presets = []
+        for i in range(self.presets_table.rowCount()):
+            name_item = self.presets_table.item(i, 0)
+            command_item = self.presets_table.item(i, 1)
+            if name_item and command_item:
+                name = name_item.text().strip()
+                command = command_item.text().strip()
+                if name and command:  # 只保存非空的预设
+                    presets.append({"name": name, "command": command})
+        settings['presets'] = presets
+        
+        return settings
+
 
 def run_mcp_service(mcp_service: McpService):
     """Function to run the MCP service in STDIO mode."""
