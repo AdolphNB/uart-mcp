@@ -266,6 +266,34 @@ class UartMcpApp(QMainWindow):
         # 初始化SerialService的时间戳设置
         self.serial_service.set_show_timestamp(self.config.get("show_timestamp", True))
 
+    def set_messagebox_black_font_style(self, msgbox):
+        """为消息框设置黑色字体样式"""
+        msgbox.setStyleSheet("""
+            QMessageBox {
+                background-color: #f0f0f0;
+                color: #000000;
+                font-size: 14px;
+            }
+            QMessageBox QLabel {
+                color: #000000;
+                font-size: 14px;
+            }
+            QMessageBox QPushButton {
+                background-color: #e0e0e0;
+                color: #000000;
+                border: 1px solid #ccc;
+                padding: 5px 15px;
+                border-radius: 3px;
+                font-size: 14px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #d0d0d0;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #c0c0c0;
+            }
+        """)
+
     def populate_ports(self):
         """从SerialService获取并填充可用串口列表"""
         self.port_combo.clear()
@@ -307,11 +335,21 @@ class UartMcpApp(QMainWindow):
         else:
             port_name = self.port_combo.currentText()
             if port_name == self.texts['no_ports']:
-                QMessageBox.warning(self, self.texts['error'], self.texts['no_ports_warning'])
+                msgbox = QMessageBox()
+                msgbox.setIcon(QMessageBox.Icon.Warning)
+                msgbox.setWindowTitle(self.texts['error'])
+                msgbox.setText(self.texts['no_ports_warning'])
+                self.set_messagebox_black_font_style(msgbox)
+                msgbox.exec()
                 return
             baud_rate = int(self.baudrate_combo.currentText())
             if not self.serial_service.connect(port_name, baud_rate):
-                QMessageBox.critical(self, self.texts['error'], f"{self.texts['cannot_open_port']} {port_name}")
+                msgbox = QMessageBox()
+                msgbox.setIcon(QMessageBox.Icon.Critical)
+                msgbox.setWindowTitle(self.texts['error'])
+                msgbox.setText(f"{self.texts['cannot_open_port']} {port_name}")
+                self.set_messagebox_black_font_style(msgbox)
+                msgbox.exec()
 
     @pyqtSlot(bool, str)
     def handle_connection_status(self, is_connected, message):
@@ -384,7 +422,12 @@ class UartMcpApp(QMainWindow):
         self.append_to_log(f"--- 错误: {error_message} ---")
         # Optionally show a popup for critical errors
         if "无法打开" in error_message or "发送失败" in error_message:
-             QMessageBox.warning(self, "串口错误", error_message)
+            msgbox = QMessageBox()
+            msgbox.setIcon(QMessageBox.Icon.Warning)
+            msgbox.setWindowTitle("串口错误")
+            msgbox.setText(error_message)
+            self.set_messagebox_black_font_style(msgbox)
+            msgbox.exec()
         
     def setup_preset_buttons(self, layout, presets):
         """根据配置动态创建预设命令按钮"""
@@ -588,6 +631,34 @@ class SettingsDialog(QDialog):
         """初始化UI"""
         self.setWindowTitle(self.texts['settings_title'])
         self.setFixedSize(600, 500)
+    
+    def set_messagebox_black_font_style(self, msgbox):
+        """为消息框设置黑色字体样式"""
+        msgbox.setStyleSheet("""
+            QMessageBox {
+                background-color: #f0f0f0;
+                color: #000000;
+                font-size: 14px;
+            }
+            QMessageBox QLabel {
+                color: #000000;
+                font-size: 14px;
+            }
+            QMessageBox QPushButton {
+                background-color: #e0e0e0;
+                color: #000000;
+                border: 1px solid #ccc;
+                padding: 5px 15px;
+                border-radius: 3px;
+                font-size: 14px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #d0d0d0;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #c0c0c0;
+            }
+        """)
         
         # 应用暗色主题样式
         self.setStyleSheet("""
@@ -870,8 +941,14 @@ Cusor or VScode config file location
     
     def reset_presets(self):
         """重置为默认预设命令"""
-        reply = QMessageBox.question(self, self.texts['confirm_reset'], self.texts['reset_message'],
-                                   QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msgbox = QMessageBox()
+        msgbox.setIcon(QMessageBox.Icon.Question)
+        msgbox.setWindowTitle(self.texts['confirm_reset'])
+        msgbox.setText(self.texts['reset_message'])
+        msgbox.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msgbox.setDefaultButton(QMessageBox.StandardButton.No)
+        self.set_messagebox_black_font_style(msgbox)
+        reply = msgbox.exec()
         if reply == QMessageBox.StandardButton.Yes:
             # 使用配置文件中的默认预设（4条）
             default_presets = config.DEFAULT_PRESETS
