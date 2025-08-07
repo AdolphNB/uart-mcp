@@ -631,34 +631,6 @@ class SettingsDialog(QDialog):
         """初始化UI"""
         self.setWindowTitle(self.texts['settings_title'])
         self.setFixedSize(600, 500)
-    
-    def set_messagebox_black_font_style(self, msgbox):
-        """为消息框设置黑色字体样式"""
-        msgbox.setStyleSheet("""
-            QMessageBox {
-                background-color: #f0f0f0;
-                color: #000000;
-                font-size: 14px;
-            }
-            QMessageBox QLabel {
-                color: #000000;
-                font-size: 14px;
-            }
-            QMessageBox QPushButton {
-                background-color: #e0e0e0;
-                color: #000000;
-                border: 1px solid #ccc;
-                padding: 5px 15px;
-                border-radius: 3px;
-                font-size: 14px;
-            }
-            QMessageBox QPushButton:hover {
-                background-color: #d0d0d0;
-            }
-            QMessageBox QPushButton:pressed {
-                background-color: #c0c0c0;
-            }
-        """)
         
         # 应用暗色主题样式
         self.setStyleSheet("""
@@ -716,7 +688,6 @@ class SettingsDialog(QDialog):
                 font-family: 'Courier New', monospace;
                 color: #f0f0f0;
             }
-
         """)
         
         layout = QVBoxLayout(self)
@@ -750,6 +721,34 @@ class SettingsDialog(QDialog):
         buttons_layout.addWidget(self.ok_button)
         buttons_layout.addWidget(self.cancel_button)
         layout.addLayout(buttons_layout)
+    
+    def set_messagebox_black_font_style(self, msgbox):
+        """为消息框设置黑色字体样式"""
+        msgbox.setStyleSheet("""
+            QMessageBox {
+                background-color: #f0f0f0;
+                color: #000000;
+                font-size: 14px;
+            }
+            QMessageBox QLabel {
+                color: #000000;
+                font-size: 14px;
+            }
+            QMessageBox QPushButton {
+                background-color: #e0e0e0;
+                color: #000000;
+                border: 1px solid #ccc;
+                padding: 5px 15px;
+                border-radius: 3px;
+                font-size: 14px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #d0d0d0;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #c0c0c0;
+            }
+        """)
     
     def create_language_tab(self):
         """创建语言设置标签页"""
