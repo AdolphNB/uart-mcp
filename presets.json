@@ -8,11 +8,11 @@
         "command": "dbg reboot adfu"
     },
     {
-        "name": "MAC",
-        "command": "dbg getInfo mac"
+        "name": "remind",
+        "command": "dbg remind all"
     },
     {
-        "name": "Version",
-        "command": "dbg getInfo version"
+        "name": "poweroff",
+        "command": "dbg reboot poweroff"
     }
 ]

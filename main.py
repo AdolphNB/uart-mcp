@@ -378,7 +378,8 @@ class UartMcpApp(QMainWindow):
         if self.serial_service.send(command_text, is_hex, add_newline):
             display_command = command_text.upper() if is_hex else command_text
             self.append_to_log(f"[{self.texts['sent']}] {display_command}")
-            self.send_input.clear()
+            # 注释掉清空输入框的代码，保留发送框内容以便重复发送
+            # self.send_input.clear()
     
     def toggle_timestamp(self, checked):
         """切换时间戳显示设置"""
